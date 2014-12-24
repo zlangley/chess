@@ -9,12 +9,18 @@
 import Foundation
 
 class ForsythEdwardsParser {
-    class func parseBoard(notation: String) -> Board {
+    class func parseBoard(notation: String) -> Board? {
         let fields = notation.componentsSeparatedByString(" ")
+        if fields.count != 6 {
+            return nil
+        }
 
         // Piece placement
-        let ranks = fields[0].componentsSeparatedByString("/").map(rankNotationToDictionary)
-        let pieces = ranks.reduce((7, [Square: Piece]()), combine: { (pair, fileDictionary) in
+        let ranks = fields[0].componentsSeparatedByString("/")
+        if ranks.count != 8 {
+            return nil
+        }
+        let pieces = ranks.map(rankNotationToDictionary).reduce((7, [Square: Piece]()), combine: { (pair, fileDictionary) in
             var (rankIndex, pieceDictionary) = pair
             for (file, piece) in fileDictionary {
                 pieceDictionary.updateValue(piece, forKey: Square(row: rankIndex, col: file))

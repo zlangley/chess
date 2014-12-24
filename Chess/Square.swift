@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct Square: Hashable {
+struct Square: Hashable, Printable, DebugPrintable {
     let row: Int
     let col: Int
 
@@ -24,6 +24,10 @@ struct Square: Hashable {
         return "\(self.file)\(self.rank)"
     }
 
+    var debugDescription: String {
+        return description
+    }
+
     var hashValue: Int {
         return self.row * 13 + self.col
     }
@@ -33,7 +37,7 @@ struct Square: Hashable {
         self.col = col
     }
 
-    init(algebraicNotation: String) {
+    init(_ algebraicNotation: String) {
         // FIXME ?
         let upperCase = algebraicNotation.uppercaseString
         let index = advance(upperCase.startIndex, 1)
@@ -61,11 +65,11 @@ struct Square: Hashable {
     }
 
     func rowDeltaToSquare(square: Square) -> Int {
-        return self.row - square.row
+        return square.row - self.row
     }
 
     func colDeltaToSquare(square: Square) -> Int {
-        return self.col - square.col
+        return square.col - self.col
     }
 
     func rowDistanceToSquare(square: Square) -> Int {

@@ -46,10 +46,10 @@ class SquareTest: XCTestCase {
     }
 
     func testAlgebraicNotationInitializer() {
-        XCTAssertEqual(Square(algebraicNotation: "a1").row, 0)
-        XCTAssertEqual(Square(algebraicNotation: "a1").col, 0)
-        XCTAssertEqual(Square(algebraicNotation: "A1").row, 0)
-        XCTAssertEqual(Square(algebraicNotation: "F4").row, 3)
-        XCTAssertEqual(Square(algebraicNotation: "F4").col, 5)
+        XCTAssertEqual(Square("a1").row, 0)
+        XCTAssertEqual(Square("a1").col, 0)
+        XCTAssertEqual(Square("A1").row, 0)
+        XCTAssertEqual(Square("F4").row, 3)
+        XCTAssertEqual(Square("F4").col, 5)
     }
 }

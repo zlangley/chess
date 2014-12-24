@@ -22,9 +22,13 @@ enum Role {
     case King
 }
 
-class Piece: Equatable {
+class Piece: Equatable, DebugPrintable {
     let color: Color
     let role: Role
+
+    var debugDescription: String {
+        return "[\(color) \(role)]"
+    }
 
     init(color: Color, role: Role) {
         self.color = color
@@ -34,13 +38,16 @@ class Piece: Equatable {
     // If the piece can move from the square `from` to the square `to`, assuming
     // an empty board.
     func canAttackFromSquare(fromSquare: Square, toSquare: Square) -> Bool {
+        if (fromSquare == toSquare) {
+            return false
+        }
         switch (role) {
         case .Pawn:
             return fromSquare.colDistanceToSquare(toSquare) == 1 && fromSquare.rowDeltaToSquare(toSquare) == ((self.color == .White) ? 1 : -1)
         case .Knight:
             let rowDistance = fromSquare.rowDistanceToSquare(toSquare)
             let colDistance = fromSquare.colDistanceToSquare(toSquare)
-            return (rowDistance == 2 && colDistance == 3) || (rowDistance == 3 && colDistance == 2)
+            return (rowDistance == 1 && colDistance == 2) || (rowDistance == 2 && colDistance == 1)
         case .Bishop:
             return fromSquare.isOnSameDiagonalAsSquare(toSquare)
         case .Rook:
@@ -60,9 +67,9 @@ class Piece: Equatable {
         } else if (self.role == .Pawn && fromSquare.isOnSameColAsSquare(toSquare)) {
             switch (self.color) {
             case .White:
-                return fromSquare.rowDeltaToSquare(toSquare) == 1 || (fromSquare.row == 2 && fromSquare.rowDeltaToSquare(toSquare) == 2)
+                return fromSquare.rowDeltaToSquare(toSquare) == 1 || (fromSquare.row == 1 && fromSquare.rowDeltaToSquare(toSquare) == 2)
             case .Black:
-                return fromSquare.rowDeltaToSquare(toSquare) == -1 || (fromSquare.row == 7 && fromSquare.rowDeltaToSquare(toSquare) == -2)
+                return fromSquare.rowDeltaToSquare(toSquare) == -1 || (fromSquare.row == 6 && fromSquare.rowDeltaToSquare(toSquare) == -2)
             }
         } else {
             return false
