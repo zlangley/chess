@@ -37,12 +37,12 @@ class PieceTest: XCTestCase {
     }
 
     func testBlackPawnMovesFromNonStartingPosition() {
-        let whitePawn = Piece(color: .Black, role: .Pawn)
+        let blackPawn = Piece(color: .Black, role: .Pawn)
         let fromSquare = Square("b6")
         let attackSquares = [Square("a5"), Square("c5")]
         let moveToSquares = [Square("a5"), Square("b5"), Square("c5")]
-        assertPieceCanOnlyMoveToSquares(whitePawn, fromSquare: fromSquare, toSquares: moveToSquares)
-        assertPieceCanOnlyAttackSquares(whitePawn, fromSquare: fromSquare, toSquares: attackSquares)
+        assertPieceCanOnlyMoveToSquares(blackPawn, fromSquare: fromSquare, toSquares: moveToSquares)
+        assertPieceCanOnlyAttackSquares(blackPawn, fromSquare: fromSquare, toSquares: attackSquares)
     }
 
     func testKnightMovement() {
