@@ -26,9 +26,6 @@ class Piece: Equatable, DebugPrintable {
     let color: Color
     let role: Role
 
-    // move to board?
-    private let squareInBounds: (Square -> Bool) = { (square) in return square.row >= 0 && square.row < 8 && square.col >= 0 && square.col < 8 }
-
     var debugDescription: String {
         return "[\(color) \(role)]"
     }
@@ -38,115 +35,154 @@ class Piece: Equatable, DebugPrintable {
         self.role = role
     }
 
-    func attackSquareGeneratorsFromSquare(square: Square) -> [SquareGenerator] {
-        let squareInBounds = self.squareInBounds
-        let allValid: (Square, Int) -> Bool = { (square, idx) in squareInBounds(square) }
-        let oneMoveValid: (Square, Int) -> Bool = { (square, idx) in return idx <= 1 && squareInBounds(square) }
+    // If the piece can move from the square `from` to the square `to`, assuming
+    // an empty board.
+    func canAttackFromSquare(fromSquare: Square, toSquare: Square, board: Board) -> Bool {
+        for generator in attackSquareGeneratorsFromSquare(fromSquare, board: board) {
+            if contains(GeneratorSequence(generator), toSquare) {
+                return true
+            }
+        }
+        return false
+    }
+
+    // If the piece can move from the square `from` to the square `to`, assuming
+    // an empty board.
+    func canMoveFromSquare(fromSquare: Square, toSquare: Square, board: Board) -> Bool {
+        for generator in moveSquareGeneratorsFromSquare(fromSquare, board: board) {
+            if contains(GeneratorSequence(generator), toSquare) {
+                return true
+            }
+        }
+        return false
+    }
+
+    private func attackSquareGeneratorsFromSquare(square: Square, board: Board) -> [SquareGenerator] {
+        let generalValidity = self.generalValidity(board)
+        let oneMoveValidity = generalValidityForNMoves(board, moves: 1)
 
         switch self.role {
         case .Pawn:
             let rowDelta = (self.color == .White) ? 1 : -1
             return [
-                SquareGenerator(startSquare: square, rowDelta: rowDelta, colDelta: 1, isValid: oneMoveValid),
-                SquareGenerator(startSquare: square, rowDelta: rowDelta, colDelta: -1, isValid: oneMoveValid),
+                SquareGenerator(startSquare: square, rowDelta: rowDelta, colDelta: 1, moveValidity: oneMoveValidity),
+                SquareGenerator(startSquare: square, rowDelta: rowDelta, colDelta: -1, moveValidity: oneMoveValidity),
             ]
         case .Knight:
             return [
-                SquareGenerator(startSquare: square, rowDelta: 1, colDelta: 2, isValid: oneMoveValid),
-                SquareGenerator(startSquare: square, rowDelta: -1, colDelta: 2, isValid: oneMoveValid),
-                SquareGenerator(startSquare: square, rowDelta: 1, colDelta: -2, isValid: oneMoveValid),
-                SquareGenerator(startSquare: square, rowDelta: -1, colDelta: -2, isValid: oneMoveValid),
-                SquareGenerator(startSquare: square, rowDelta: 2, colDelta: 1, isValid: oneMoveValid),
-                SquareGenerator(startSquare: square, rowDelta: -2, colDelta: 1, isValid: oneMoveValid),
-                SquareGenerator(startSquare: square, rowDelta: 2, colDelta: -1, isValid: oneMoveValid),
-                SquareGenerator(startSquare: square, rowDelta: -2, colDelta: -1, isValid: oneMoveValid)
+                SquareGenerator(startSquare: square, rowDelta: 1, colDelta: 2, moveValidity: oneMoveValidity),
+                SquareGenerator(startSquare: square, rowDelta: -1, colDelta: 2, moveValidity: oneMoveValidity),
+                SquareGenerator(startSquare: square, rowDelta: 1, colDelta: -2, moveValidity: oneMoveValidity),
+                SquareGenerator(startSquare: square, rowDelta: -1, colDelta: -2, moveValidity: oneMoveValidity),
+                SquareGenerator(startSquare: square, rowDelta: 2, colDelta: 1, moveValidity: oneMoveValidity),
+                SquareGenerator(startSquare: square, rowDelta: -2, colDelta: 1, moveValidity: oneMoveValidity),
+                SquareGenerator(startSquare: square, rowDelta: 2, colDelta: -1, moveValidity: oneMoveValidity),
+                SquareGenerator(startSquare: square, rowDelta: -2, colDelta: -1, moveValidity: oneMoveValidity)
             ]
         case .Bishop:
-            return self.diagonalGeneratorsFromSquare(square, isValid: allValid)
+            return self.diagonalGeneratorsFromSquare(square, moveValidity: generalValidity)
         case .Rook:
-            return self.lineGeneratorsFromSquare(square, isValid: allValid)
+            return self.lineGeneratorsFromSquare(square, moveValidity: generalValidity)
         case .Queen:
-            return self.diagonalGeneratorsFromSquare(square, isValid: allValid) + self.lineGeneratorsFromSquare(square, isValid: allValid)
+            return self.diagonalGeneratorsFromSquare(square, moveValidity: generalValidity) + self.lineGeneratorsFromSquare(square, moveValidity: generalValidity)
         case .King:
-            return self.diagonalGeneratorsFromSquare(square, isValid: oneMoveValid) + self.lineGeneratorsFromSquare(square, isValid: oneMoveValid)
+            return self.diagonalGeneratorsFromSquare(square, moveValidity: oneMoveValidity) + self.lineGeneratorsFromSquare(square, moveValidity: oneMoveValidity)
         }
     }
 
-    func moveSquareGeneratorsFromSquare(square: Square) -> [SquareGenerator] {
+    private func moveSquareGeneratorsFromSquare(square: Square, board: Board) -> [SquareGenerator] {
         if self.role != .Pawn {
-            return attackSquareGeneratorsFromSquare(square)
+            return attackSquareGeneratorsFromSquare(square, board: board)
         }
 
-        let squareInBounds = self.squareInBounds
-        let validForNMoves: Int -> (Square, Int) -> Bool = { (moves) in
-            return { (square, idx) in return idx <= moves && squareInBounds(square) }
-        }
         let numberOfMoves = ((self.color == .White && square.row == 1) || (self.color == .Black && square.row == 6)) ? 2 : 1
         let rowDelta = (self.color == .White) ? 1 : -1
-        return attackSquareGeneratorsFromSquare(square) + [SquareGenerator(startSquare: square, rowDelta: rowDelta, colDelta: 0, isValid:validForNMoves(numberOfMoves))]
+        return [SquareGenerator(startSquare: square, rowDelta: rowDelta, colDelta: 0, moveValidity: self.generalValidityForNMoves(board, moves: numberOfMoves))] + attackSquareGeneratorsFromSquare(square, board: board)
     }
 
-    // If the piece can move from the square `from` to the square `to`, assuming
-    // an empty board.
-    func canAttackFromSquare(fromSquare: Square, toSquare: Square) -> Bool {
-        for generator in attackSquareGeneratorsFromSquare(fromSquare) {
-            if contains(GeneratorSequence(generator), toSquare) {
-                return true
-            }
-        }
-        return false
-    }
-
-    // If the piece can move from the square `from` to the square `to`, assuming
-    // an empty board.
-    func canMoveFromSquare(fromSquare: Square, toSquare: Square) -> Bool {
-        for generator in moveSquareGeneratorsFromSquare(fromSquare) {
-            if contains(GeneratorSequence(generator), toSquare) {
-                return true
-            }
-        }
-        return false
-    }
-
-    private func diagonalGeneratorsFromSquare(square: Square, isValid: (Square, Int) -> Bool) -> [SquareGenerator] {
+    private func diagonalGeneratorsFromSquare(square: Square, moveValidity: (Square, Int) -> MoveValidity) -> [SquareGenerator] {
         return [
-            SquareGenerator(startSquare: square, rowDelta: 1, colDelta: 1, isValid: isValid),
-            SquareGenerator(startSquare: square, rowDelta: -1, colDelta: 1, isValid: isValid),
-            SquareGenerator(startSquare: square, rowDelta: 1, colDelta: -1, isValid: isValid),
-            SquareGenerator(startSquare: square, rowDelta: -1, colDelta: -1, isValid: isValid)
+            SquareGenerator(startSquare: square, rowDelta: 1, colDelta: 1, moveValidity: moveValidity),
+            SquareGenerator(startSquare: square, rowDelta: -1, colDelta: 1, moveValidity: moveValidity),
+            SquareGenerator(startSquare: square, rowDelta: 1, colDelta: -1, moveValidity: moveValidity),
+            SquareGenerator(startSquare: square, rowDelta: -1, colDelta: -1, moveValidity: moveValidity)
         ]
     }
 
-    private func lineGeneratorsFromSquare(square: Square, isValid: (Square, Int) -> Bool) -> [SquareGenerator] {
+    private func lineGeneratorsFromSquare(square: Square, moveValidity: (Square, Int) -> MoveValidity) -> [SquareGenerator] {
         return [
-            SquareGenerator(startSquare: square, rowDelta: 0, colDelta: 1, isValid: isValid),
-            SquareGenerator(startSquare: square, rowDelta: 0, colDelta: -1, isValid: isValid),
-            SquareGenerator(startSquare: square, rowDelta: -1, colDelta: 0, isValid: isValid),
-            SquareGenerator(startSquare: square, rowDelta: 1, colDelta: 0, isValid: isValid)
+            SquareGenerator(startSquare: square, rowDelta: 0, colDelta: 1, moveValidity: moveValidity),
+            SquareGenerator(startSquare: square, rowDelta: 0, colDelta: -1, moveValidity: moveValidity),
+            SquareGenerator(startSquare: square, rowDelta: -1, colDelta: 0, moveValidity: moveValidity),
+            SquareGenerator(startSquare: square, rowDelta: 1, colDelta: 0, moveValidity: moveValidity)
         ]
     }
+
+    private func generalValidity(board: Board) -> (Square, Int) -> MoveValidity {
+        return { (square, idx) in
+            if board.containsSquare(square) {
+                if let piece = board[square] {
+                    return (piece.color == self.color) ? .InvalidMove : .LastValidMove
+                } else {
+                    return .ValidMove
+                }
+            } else {
+                return .InvalidMove
+            }
+        }
+    }
+
+    private func generalValidityForNMoves(board: Board, moves: Int) -> (Square, Int) -> MoveValidity {
+        let generalValidity = self.generalValidity(board)
+        return { (square, idx) in
+            if (generalValidity(square, idx) == .ValidMove && idx == moves) {
+                return .LastValidMove
+            }
+            return generalValidity(square, idx)
+        }
+    }
+}
+
+enum MoveValidity {
+    case InvalidMove
+    case ValidMove
+    case LastValidMove
 }
 
 class SquareGenerator: GeneratorType {
     let startSquare: Square
     let rowDelta: Int
     let colDelta: Int
-    let isValid: (Square, Int) -> Bool
+    let moveValidity: (Square, Int) -> MoveValidity
 
-    var index: Int
+    private var index: Int
+    private var done: Bool
 
-    init(startSquare: Square, rowDelta: Int, colDelta: Int, isValid: (Square, Int) -> Bool) {
+    init(startSquare: Square, rowDelta: Int, colDelta: Int, moveValidity: (Square, Int) -> MoveValidity) {
         self.startSquare = startSquare
         self.rowDelta = rowDelta
         self.colDelta = colDelta
-        self.isValid = isValid
+        self.moveValidity = moveValidity
         self.index = 0
+        self.done = false
     }
 
     func next() -> Square? {
+        if self.done {
+            return nil
+        }
+
         self.index++
         let nextSquare = Square(row: startSquare.row + rowDelta * index, col: startSquare.col + colDelta * index)
-        return isValid(nextSquare, self.index) ? nextSquare : nil
+        switch moveValidity(nextSquare, self.index) {
+        case .InvalidMove:
+            return nil
+        case .ValidMove:
+            return nextSquare
+        case .LastValidMove:
+            self.done = true
+            return nextSquare
+        }
     }
 }
 

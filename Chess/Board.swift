@@ -25,21 +25,29 @@ class Board {
         self.colorToMove = colorToMove
     }
 
-    func pieceAtSquare(square: Square) -> Piece? {
+    subscript(square: Square) -> Piece? {
         return pieceDictionary[square]
+    }
+
+    subscript(square: String) -> Piece? {
+        return pieceDictionary[Square(square)]
+    }
+
+    func containsSquare(square: Square) -> Bool {
+        return square.row >= 0 && square.row < 8 && square.col >= 0 && square.col < 8
     }
 
     // Returns self if not possible.
     func boardByMovingPieceFromSquare(fromSquare: Square, toSquare: Square) -> Board {
-        if let pieceToMove = self.pieceAtSquare(fromSquare) {
-            if let pieceBeingAttacked = self.pieceAtSquare(toSquare) {
-                if pieceToMove.canAttackFromSquare(fromSquare, toSquare: toSquare) {
+        if let pieceToMove = self[fromSquare] {
+            if let pieceBeingAttacked = self[toSquare] {
+                if pieceToMove.canAttackFromSquare(fromSquare, toSquare: toSquare, board: self) {
                     var newPieceDictionary = pieceDictionary
                     newPieceDictionary.removeValueForKey(fromSquare)
                     newPieceDictionary.updateValue(pieceToMove, forKey: toSquare)
                     return Board(pieceDictionary: newPieceDictionary, canWhiteCastleKingside: canWhiteCastleKingside, canWhiteCastleQueenside: canWhiteCastleQueenside, canBlackCastleKingside: canBlackCastleKingside, canBlackCastleQueenside: canBlackCastleQueenside, colorToMove: colorToMove)
                 }
-            } else if pieceToMove.canMoveFromSquare(fromSquare, toSquare: toSquare) {
+            } else if pieceToMove.canMoveFromSquare(fromSquare, toSquare: toSquare, board: self) {
                 var newPieceDictionary = pieceDictionary
                 newPieceDictionary.removeValueForKey(fromSquare)
                 newPieceDictionary.updateValue(pieceToMove, forKey: toSquare)
