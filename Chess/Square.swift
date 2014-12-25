@@ -13,7 +13,7 @@ struct Square: Hashable, Printable, DebugPrintable {
     let col: Int
 
     var file: String {
-        return String(UnicodeScalar(65 + col))
+        return String(UnicodeScalar(UnicodeScalar("a").value + col))
     }
 
     var rank: String {
@@ -39,11 +39,11 @@ struct Square: Hashable, Printable, DebugPrintable {
 
     init(_ algebraicNotation: String) {
         // FIXME ?
-        let upperCase = algebraicNotation.uppercaseString
-        let index = advance(upperCase.startIndex, 1)
-        let file = upperCase.substringToIndex(index)
-        let rank = upperCase.substringFromIndex(index)
-        let col = Int(file.unicodeScalars[file.unicodeScalars.startIndex].value) - 65
+        let lowerCase = algebraicNotation.lowercaseString
+        let index = advance(lowerCase.startIndex, 1)
+        let file = lowerCase.substringToIndex(index)
+        let rank = lowerCase.substringFromIndex(index)
+        let col = Int(file.unicodeScalars[file.unicodeScalars.startIndex].value - UnicodeScalar("a").value)
         let row = rank.toInt()! - 1
         self.init(row: row, col: col)
     }
