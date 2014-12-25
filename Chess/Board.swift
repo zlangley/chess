@@ -40,14 +40,7 @@ class Board {
     // Returns self if not possible.
     func boardByMovingPieceFromSquare(fromSquare: Square, toSquare: Square) -> Board {
         if let pieceToMove = self[fromSquare] {
-            if let pieceBeingAttacked = self[toSquare] {
-                if pieceToMove.canAttackFromSquare(fromSquare, toSquare: toSquare, board: self) {
-                    var newPieceDictionary = pieceDictionary
-                    newPieceDictionary.removeValueForKey(fromSquare)
-                    newPieceDictionary.updateValue(pieceToMove, forKey: toSquare)
-                    return Board(pieceDictionary: newPieceDictionary, canWhiteCastleKingside: canWhiteCastleKingside, canWhiteCastleQueenside: canWhiteCastleQueenside, canBlackCastleKingside: canBlackCastleKingside, canBlackCastleQueenside: canBlackCastleQueenside, colorToMove: colorToMove)
-                }
-            } else if pieceToMove.canMoveFromSquare(fromSquare, toSquare: toSquare, board: self) {
+            if pieceToMove.canMoveFromSquare(fromSquare, toSquare: toSquare, board: self) {
                 var newPieceDictionary = pieceDictionary
                 newPieceDictionary.removeValueForKey(fromSquare)
                 newPieceDictionary.updateValue(pieceToMove, forKey: toSquare)
