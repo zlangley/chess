@@ -31,7 +31,7 @@ class ForsythEdwardsParser {
         // Color to move
         let colorToMove = (fields[1] == "w") ? Color.White : Color.Black
 
-        // Castline ability
+        // Castling ability
         let canWhiteCastleKingSide = fields[2].rangeOfString("K") != nil
         let canWhiteCastleQueenSide = fields[2].rangeOfString("Q") != nil
         let canBlackCastleKingSide = fields[2].rangeOfString("k") != nil
